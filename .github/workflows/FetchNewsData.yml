@@ -49,5 +49,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
           git add *.db
-          git commit -m "Update news data (auto)"
+          git diff-index --quiet HEAD || git commit -m "Update news data (auto)"
           git push origin main  # main 브랜치에 푸시
