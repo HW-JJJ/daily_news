@@ -50,4 +50,4 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add *.db
           git commit -m "Update news data (auto)"
-          git push
+          git push origin main  # main 브랜치에 푸시
