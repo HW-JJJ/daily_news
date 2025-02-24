@@ -38,10 +38,26 @@ jobs:
           pip install selenium  # selenium 패키지 설치
           pip install scipy==1.7.3  # scipy 버전 1.7.3으로 고정
 
+      - name: Install Chromium and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          sudo apt-get install -y chromium-chromedriver
+          sudo apt-get install -y libgsf-1-114
+
+      - name: Set up Chrome for Selenium
+        run: |
+          export CHROME_BIN=/usr/bin/chromium-browser
+          export DISPLAY=:99.0
+          sudo apt-get install -y xvfb
+          Xvfb :99 &
+
       - name: Run the news script
         run: |
-         python news_script.py
-          
+          python news_script.py
+        env:
+          DISPLAY: :99.0  # headless 환경에서 실행될 수 있도록 DISPLAY 설정
+
       - name: 변경 사항 커밋 및 푸시
         run: |
           git config --global user.name "github-actions[bot]"
