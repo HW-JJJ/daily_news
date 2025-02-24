@@ -540,3 +540,17 @@ def summarize_article (article_text):
     else :
         summary = article_text
     return summary
+
+politic_article()
+time.sleep(5)
+economy_article()
+time.sleep(5)
+society_article()
+time.sleep(5)
+culture_article()
+time.sleep(5)
+it_article()
+time.sleep(5)
+world_article()
+time.sleep(5)
+driver.close()
