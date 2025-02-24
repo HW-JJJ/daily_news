@@ -42,7 +42,7 @@ jobs:
 
       - name: Run the news scraper
         run: |
-         python news_scraper.py
+         python news_script.py
           
       - name: change push
         run: |
