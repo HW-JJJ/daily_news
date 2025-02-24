@@ -23,6 +23,10 @@ jobs:
         with:
           python-version: "3.9"
 
+      - name: 최신 빌드 도구 설치
+        run: | 
+          pip install --upgrade setuptools wheel  # 최신 빌드 도구 업그레이드
+
       - name: 필요한 패키지 설치
         run: | # 웹 크롤링 및 DB 저장 라이브러리 설치
           pip install beautifulsoup4
@@ -30,7 +34,7 @@ jobs:
           pip install numpy==1.21.2  # gensim 3.8.3과 호환되는 numpy 버전
           pip install gensim==3.8.3  # gensim 3.8.3 버전 설치
           pip install scipy
-          
+
       - name: 뉴스 데이터 크롤링 및 저장
         run: python news_script.py  # 웹 크롤링을 실행하는 Python 스크립트 실행
 
