@@ -37,6 +37,7 @@ jobs:
           pip install flask
           pip install selenium
           pip install scipy==1.7.3
+          pip install webdriver-manager  # webdriver-manager 설치
 
       - name: Install Google Chrome
         run: |
@@ -45,24 +46,6 @@ jobs:
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb
           sudo apt --fix-broken install -y
-
-      - name: Install ChromeDriver
-        run: |
-          # Get the latest stable version of Chrome
-          CHROME_VERSION=$(google-chrome --version | sed 's/Google Chrome //g' | cut -d '.' -f 1,2)
-
-          # Fetch the compatible version of chromedriver based on Chrome version
-          LATEST_RELEASE=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})
-
-          # Download the chromedriver
-          wget https://chromedriver.storage.googleapis.com/${LATEST_RELEASE}/chromedriver_linux64.zip
-
-          # Unzip and move chromedriver to /usr/local/bin
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin
-
-          # Clean up
-          rm chromedriver_linux64.zip
 
       - name: Run the news script
         run: |
