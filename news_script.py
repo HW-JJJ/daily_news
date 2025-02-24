@@ -10,13 +10,18 @@ from bs4 import BeautifulSoup
 from gensim.summarization import summarize
 from selenium.common.exceptions import NoSuchElementException
 from scipy.linalg import triu
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 url = "https://news.naver.com/section/100"
 
 # Selenium WebDriver 설정
-options = wb.ChromeOptions()
-options.add_argument("--headless")  # 브라우저 창 없이 실행
-driver = wb.Chrome(options=options)
+options = Options()
+options.add_argument("--headless=new") # 최신 headless 모드 사용
+options.add_argument("--no-sandbox") # 일부 환경에서 필요
+options.add_argument("--disable-dev-shm-usage") # 메모리 부족 문제 해결
 driver.get(url)
 
 
