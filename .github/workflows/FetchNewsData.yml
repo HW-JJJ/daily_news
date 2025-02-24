@@ -47,4 +47,6 @@ jobs:
           else
             echo "No .db files to commit"
           fi
-    
+      - name: 디버깅 - .db 파일 확인
+        run: |
+          ls -la
