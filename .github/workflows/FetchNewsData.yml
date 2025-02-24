@@ -40,7 +40,7 @@ jobs:
           pip install selenium  # selenium 패키지 설치
           pip install scipy==1.7.3  # scipy 버전 1.7.3으로 고정
 
-      - name: Run the news scraper
+      - name: Run the news script
         run: |
          python news_script.py
           
@@ -51,5 +51,3 @@ jobs:
           git add *.db
           git commit -m "Update news data (auto)"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
