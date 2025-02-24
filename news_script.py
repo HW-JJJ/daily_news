@@ -1,55 +1,33 @@
 from flask import Flask, render_template, request
 import sqlite3
-import random
+import time
 from selenium import webdriver as wb
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-import time
-import requests
-from bs4 import BeautifulSoup
-from gensim.summarization import summarize
-from selenium.common.exceptions import NoSuchElementException
-from scipy.linalg import triu
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-
 from selenium.webdriver.chrome.service import Service
-
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver import Chrome
 from webdriver_manager.chrome import ChromeDriverManager
+from gensim.summarization import summarize
 
+# URL for news section
 url = "https://news.naver.com/section/100"
 
+# Setup Chrome options for headless mode
 options = Options()
-options.add_argument("--headless=new")  # 최신 headless 모드 사용
-options.add_argument("--no-sandbox")  # 일부 환경에서 필요
-options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
-options.add_argument("--headless")  # 브라우저 창 없이 실행
+options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 driver = wb.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 driver.get(url)
 
-
-# 정치 뉴스 함수
-def politic_article():
-
-    # 데이터베이스 연결
-    conn = sqlite3.connect("politics.db")
+# Common function to create table if it doesn't exist
+def create_table(db_name):
+    conn = sqlite3.connect(db_name)
     curs = conn.cursor()
-
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
-
-    # 테이블 생성 (이미 존재하면 생략)
+    
+    # Table creation query
     sql = """
     CREATE TABLE IF NOT EXISTS contact(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,526 +37,116 @@ def politic_article():
     )
     """
     curs.execute(sql)
-
+    conn.commit()
     curs.close()
     conn.close()
-    
-    try:
-        politic_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li span"))
-        )
-        politic_button.click()
 
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-    
-                conn = sqlite3.connect("politics.db")
-                curs = conn.cursor()
-    
-                body = article_text.strip() if summary else "No content available"
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-                
-                # 데이터 추가
-                insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article, body))
-    
-                # 변경 사항 저장
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print()
-
-# 경제 뉴스 함수
-def economy_article():
-    # 데이터베이스 연결
-    conn = sqlite3.connect("economy.db")
+# Function to insert data into the table
+def insert_data(db_name, title, article, body):
+    conn = sqlite3.connect(db_name)
     curs = conn.cursor()
     
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
+    # Insert data query
+    insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
+    curs.execute(insert_sql, (title, article, body))
+    conn.commit()
     
-    # 테이블 생성 (이미 존재하면 생략)
-    sql = """
-    CREATE TABLE IF NOT EXISTS contact(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        article TEXT,
-        body TEXT
-    )
-    """
-    curs.execute(sql)
-
     curs.close()
     conn.close()
-    
-    try:
-        economy_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li span"))
-        )
-        economy_button.click()
 
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-    
-    
-                conn = sqlite3.connect("economy.db")
-                curs = conn.cursor()
-                
-                body = article_text.strip() if summary else "No content available"
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-    
-                # 데이터 추가
-                insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article,body))
-    
-                # 변경 사항 저장
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print()
-
-# 사회 뉴스 함수
-def society_article():
-    # 데이터베이스 연결
-    conn = sqlite3.connect("society.db")
-    curs = conn.cursor()
-    
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
-    
-    # 테이블 생성 (이미 존재하면 생략)
-    sql = """
-    CREATE TABLE IF NOT EXISTS contact(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        article TEXT,
-        body TEXT
-    )
-    """
-    curs.execute(sql)
-
-    curs.close()
-    conn.close()
-    
-    try:
-        society_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li span"))
-        )
-        society_button.click()
-
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-    
-                conn = sqlite3.connect("society.db")
-                curs = conn.cursor()
-    
-                body = article_text.strip() if summary else "No content available"
-    
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-    
-                # 데이터 추가
-                insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article, body))
-    
-                # 변경 사항 저장
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print() 
-
-# 생활/문화 뉴스 함수
-def culture_article():
-    # 데이터베이스 연결
-    conn = sqlite3.connect("culture.db")
-    curs = conn.cursor()
-    
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
-    
-# # 테이블의 모든 데이터 삭제
-#     delete_sql = "DELETE FROM contact"
-#     curs.execute(delete_sql)
-
-    # 테이블 생성 (이미 존재하면 생략)
-    sql = """
-    CREATE TABLE IF NOT EXISTS contact(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        article TEXT,
-        body TEXT
-    )
-    """
-    curs.execute(sql)
-
-    curs.close()
-    conn.close()
-    
-    try:
-        culture_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li+li span"))
-        )
-        culture_button.click()
-
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-                conn = sqlite3.connect("culture.db")
-                curs = conn.cursor()
-    
-                body = article_text.strip() if summary else "No content available"
-    
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-    
-                # 데이터 추가
-                #print(f"✅ 저장할 데이터 - Title: {title}, Article: {article}")
-    
-                insert_sql = "INSERT INTO contact (title, article,body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article, body))
-    
-                # 변경 사항 저장
-                time.sleep(1)
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print() 
-
-# IT/과학 뉴스 함수
-def it_article():
-    # 데이터베이스 연결
-    conn = sqlite3.connect("it_science.db")
-    curs = conn.cursor()
-    
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
-    
-    # 테이블 생성 (이미 존재하면 생략)
-    sql = """
-    CREATE TABLE IF NOT EXISTS contact(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        article TEXT,
-        body TEXT
-    )
-    """
-    curs.execute(sql)
-
-    curs.close()
-    conn.close()
-    
-   try:
-        it_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li+li+li span"))
-        )
-        it_button.click()
-
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-    
-                conn = sqlite3.connect("it_science.db")
-                curs = conn.cursor()
-    
-                body = article_text.strip() if summary else "No content available"
-    
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-    
-                # 데이터 추가
-                insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article, body))
-    
-                # 변경 사항 저장
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print() 
-
-# 세계 뉴스 함수
-def world_article():
-    # 데이터베이스 연결
-    conn = sqlite3.connect("world.db")
-    curs = conn.cursor()
-    
-    # 테이블 존재 여부 확인
-    curs.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contact';")
-    table_exists = curs.fetchone()
-
-    # 테이블이 존재하면 삭제
-    if table_exists:  
-        delete_sql = "DELETE FROM contact"
-        curs.execute(delete_sql)
-        conn.commit()
-    
-    # 테이블 생성 (이미 존재하면 생략)
-    sql = """
-    CREATE TABLE IF NOT EXISTS contact(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        article TEXT,
-        body TEXT
-    )
-    """
-    curs.execute(sql)
-
-    curs.close()
-    conn.close()
-    
-    try:
-        world_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li+li+li+li span"))
-        )
-       world_button.click()
-
-        # 헤드라인 누르기 정치, 경제, 사회 ,생활/문화, IT/과학, 세계 모두 동일한 코드임
-        headline_banner = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
-        )
-        headline_banner.click()
-
-        # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
-        try:
-            for i in range(10):
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li{'+li'*i}>div>div a")
-                news_title_button.click()
-                time.sleep(2)
-                # 헤드라인 뉴스 들어가서 기사 제목과 기사 내용 수집
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
-                news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
-                article_text = article_body.text
-                summary = summarize_article(article_text)
-                print(summary)
-    
-                conn = sqlite3.connect("world.db")
-                curs = conn.cursor()
-    
-                body = article_text.strip() if summary else "No content available"
-    
-                title = news_title_text.strip() if news_title_text else "Unknown Title"
-                article = summary.strip() if summary else "No content available"
-    
-                # 데이터 추가
-                insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
-                curs.execute(insert_sql, (title, article, body))
-    
-                # 변경 사항 저장
-                conn.commit()
-                
-                # 연결 종료
-                curs.close()
-                conn.close()
-                
-                driver.back()
-                
-                time.sleep(2)
-        except NoSuchElementException:
-            print()
-        finally:
-            print() 
-
-        return(summary)
-
-#  기사요약
-def summarize_article (article_text):
+# Function to summarize the article based on its length
+def summarize_article(article_text):
     text_length = len(article_text)
-    if text_length >= 1500 :
-        summary = summarize(article_text,0.1)
-    elif text_length>= 1400 and text_length < 1500:
-        summary = summarize(article_text,0.11)
-    elif text_length>= 1300 and text_length < 1400:
-        summary = summarize(article_text,0.12)
-    elif text_length>= 1200 and text_length < 1300:
-        summary = summarize(article_text,0.13)
-    elif text_length>= 1100 and text_length < 1200:
-        summary = summarize(article_text,0.14)
-    elif text_length>= 1000 and text_length < 1100:
-        summary = summarize(article_text,0.15)
-    elif text_length>= 900 and text_length < 1000:
-        summary = summarize(article_text,0.16)
-    elif text_length>= 750 and text_length < 900:
-        summary = summarize(article_text,0.2)
-    elif text_length>= 500 and text_length < 750:
-        summary = summarize(article_text,0.3)
-    elif text_length >= 200 and text_length < 500:
-        summary = summarize(article_text,0.5)
-    else :
+    if text_length >= 1500:
+        summary = summarize(article_text, 0.1)
+    elif text_length >= 1400:
+        summary = summarize(article_text, 0.11)
+    elif text_length >= 1300:
+        summary = summarize(article_text, 0.12)
+    elif text_length >= 1200:
+        summary = summarize(article_text, 0.13)
+    elif text_length >= 1100:
+        summary = summarize(article_text, 0.14)
+    elif text_length >= 1000:
+        summary = summarize(article_text, 0.15)
+    elif text_length >= 900:
+        summary = summarize(article_text, 0.16)
+    elif text_length >= 750:
+        summary = summarize(article_text, 0.2)
+    elif text_length >= 500:
+        summary = summarize(article_text, 0.3)
+    elif text_length >= 200:
+        summary = summarize(article_text, 0.5)
+    else:
         summary = article_text
     return summary
 
-politic_article()
-time.sleep(5)
-economy_article()
-time.sleep(5)
-society_article()
-time.sleep(5)
-culture_article()
-time.sleep(5)
-it_article()
-time.sleep(5)
-world_article()
-time.sleep(5)
-driver.close()
+# General function to collect articles from each section
+def collect_articles(section_name, db_name, section_index, menu_index):
+    # Data collection logic for different news sections
+    try:
+        section_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, f".Nlnb_menu_inner li:nth-child({menu_index}) span"))
+        )
+        section_button.click()
+
+        # Clicking the headline banner
+        headline_banner = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
+        )
+        headline_banner.click()
+
+        # Collect the first 10 articles
+        for i in range(10):
+            try:
+                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li:nth-child({i+1})>div>div a")
+                news_title_button.click()
+                time.sleep(2)
+                
+                # Collect the article content
+                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
+                news_title_text = news_titles.text
+                
+                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
+                article_text = article_body.text
+                summary = summarize_article(article_text)
+                
+                # Insert the data into the database
+                insert_data(db_name, news_title_text, summary, article_text)
+                
+                # Go back to the news list
+                driver.back()
+                time.sleep(2)
+            except Exception as e:
+                print(f"Error in article {i+1}: {e}")
+    except Exception as e:
+        print(f"Error in {section_name} section: {e}")
+    finally:
+        print(f"Finished collecting articles for {section_name}")
+
+# Main execution
+def main():
+    # List of sections to collect news from
+    sections = [
+        ("Politic", "politics.db", 1, 1),
+        ("Economy", "economy.db", 2, 2),
+        ("Society", "society.db", 3, 3),
+        ("Culture", "culture.db", 4, 4),
+        ("IT/Science", "it_science.db", 5, 5),
+        ("World", "world.db", 6, 6)
+    ]
+
+    for section_name, db_name, section_index, menu_index in sections:
+        # Create the table for each section
+        create_table(db_name)
+        # Collect articles for each section
+        collect_articles(section_name, db_name, section_index, menu_index)
+        time.sleep(5)
+
+    # Close the driver after collecting all articles
+    driver.quit()
+
+# Run the main function
+if __name__ == "__main__":
+    main()
+
