@@ -48,8 +48,11 @@ jobs:
           sudo dpkg -i google-chrome-stable_current_amd64.deb
           sudo apt-get install -y -f  # 필요한 의존성 설치
 
-          # 최신 chromedriver 다운로드 (동적 URL로 최신 버전 다운로드)
-          CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+          # 설치된 Chrome 버전 확인
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+          
+          # Chrome 버전에 맞는 chromedriver 버전 확인 및 다운로드
+          CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
           wget https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
@@ -65,3 +68,4 @@ jobs:
           git add *.db  # 모든 .db 파일 추가
           git commit -m "Update news data (auto)" || echo "No changes to commit"
           git push
+
