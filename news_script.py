@@ -15,9 +15,8 @@ url = "https://news.naver.com/section/100"
 
 # Selenium WebDriver 설정
 options = wb.ChromeOptions()
-options.add_argument("--headless")
-options.binary_location = "/usr/bin/chromium-browser" # chromium 경로 설정  <- 이 부분 추가
-driver = wb.Chrome(options=options) # chromedriver는 별도 설정 필요 없음
+options.add_argument("--headless")  # 브라우저 창 없이 실행
+driver = wb.Chrome(options=options)
 driver.get(url)
 
 
