@@ -53,6 +53,11 @@ jobs:
           
           # Chrome 버전 맞는 chromedriver 버전 다운로드
           CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
+          
+          # 확인된 chromedriver 버전 출력
+          echo "Detected ChromeDriver version: $CHROMEDRIVER_VERSION"
+
+          # 올바른 URL을 통해 chromedriver 다운로드
           wget https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/
