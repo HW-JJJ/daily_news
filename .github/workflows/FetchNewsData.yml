@@ -50,14 +50,17 @@ jobs:
         run: |
           # Get the latest stable version of Chrome
           CHROME_VERSION=$(google-chrome --version | sed 's/Google Chrome //g' | cut -d '.' -f 1,2)
-          
-          # Download the compatible version of chromedriver
-          wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})/chromedriver_linux64.zip
-          
+
+          # Fetch the compatible version of chromedriver based on Chrome version
+          LATEST_RELEASE=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})
+
+          # Download the chromedriver
+          wget https://chromedriver.storage.googleapis.com/${LATEST_RELEASE}/chromedriver_linux64.zip
+
           # Unzip and move chromedriver to /usr/local/bin
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin
-          
+
           # Clean up
           rm chromedriver_linux64.zip
 
