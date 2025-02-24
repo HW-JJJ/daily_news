@@ -28,19 +28,21 @@ jobs:
       - name: Install wheel
         run: pip install wheel
 
+      - name: Install dependencies for building gensim
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential  # 컴파일 도구 설치
+          sudo apt-get install -y libopenblas-dev liblapack-dev  # gensim 의존성
+          sudo apt-get install -y chromium-browser chromium-chromedriver libgsf-1-114
+
       - name: package install
         run: |
           pip install requests beautifulsoup4 numpy==1.21.2 gensim==3.8.3 flask selenium scipy==1.7.3
 
-      - name: Install Chromium and ChromeDriver
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser chromium-chromedriver libgsf-1-114
-
       - name: Set up Chrome for Selenium
         run: |
           export CHROME_BIN=/usr/bin/chromium-browser
-          export CHROMEDRIVER_BIN=/usr/bin/chromedriver  # ChromeDriver 경로 추가
+          export CHROMEDRIVER_BIN=/usr/bin/chromedriver
           export DISPLAY=:99.0
           sudo apt-get install -y xvfb
           Xvfb :99 &
@@ -51,7 +53,7 @@ jobs:
         env:
           DISPLAY: :99.0
           CHROME_BIN: /usr/bin/chromium-browser
-          CHROMEDRIVER_BIN: /usr/bin/chromedriver  # ChromeDriver 환경 변수 추가
+          CHROMEDRIVER_BIN: /usr/bin/chromedriver
 
       - name: 변경 사항 커밋 및 푸시
         run: |
