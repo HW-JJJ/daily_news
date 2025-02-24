@@ -83,38 +83,51 @@ def summarize_article(article_text):
 
 # General function to collect articles from each section
 def collect_articles(section_name, db_name, section_index, menu_index):
-    # Data collection logic for different news sections
     try:
         section_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, f".Nlnb_menu_inner li:nth-child({menu_index}) span"))
         )
         section_button.click()
+        print(f"Clicked on {section_name} section")
 
-        # Clicking the headline banner
         headline_banner = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
         )
         headline_banner.click()
+        print(f"Clicked on headline banner")
 
-        # Collect the first 10 articles
         for i in range(10):
             try:
-                news_title_button = driver.find_element(By.CSS_SELECTOR, f"#newsct div>ul>li:nth-child({i+1})>div>div a")
+                # Wait for the news article link to be clickable
+                news_title_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, f"#newsct div>ul>li:nth-child({i+1})>div>div a"))
+                )
                 news_title_button.click()
+                print(f"Clicked on article {i+1}")
                 time.sleep(2)
-                
-                # Collect the article content
-                news_titles = driver.find_element(By.CSS_SELECTOR, "#title_area>span")
+
+                # Wait for the title to load
+                news_titles = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "#title_area>span"))
+                )
                 news_title_text = news_titles.text
-                
-                article_body = driver.find_element(By.CSS_SELECTOR, "#dic_area")
+                print(f"Title: {news_title_text}")
+
+                # Wait for the article body to load
+                article_body = WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "#dic_area"))
+                )
                 article_text = article_body.text
+                print(f"Article text length: {len(article_text)}")
+
+                # Summarize the article
                 summary = summarize_article(article_text)
-                
+                print(f"Summary: {summary}")
+
                 # Insert the data into the database
                 insert_data(db_name, news_title_text, summary, article_text)
-                
-                # Go back to the news list
+                print(f"Inserted article {i+1} into the database")
+
                 driver.back()
                 time.sleep(2)
             except Exception as e:
@@ -123,6 +136,7 @@ def collect_articles(section_name, db_name, section_index, menu_index):
         print(f"Error in {section_name} section: {e}")
     finally:
         print(f"Finished collecting articles for {section_name}")
+
 
 # Main execution
 def main():
