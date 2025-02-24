@@ -46,7 +46,7 @@ jobs:
           
       - name: change push
         run: |
-          git config --global user.name "github-actions[bot]"
+          git config --global user.name "github-actions-bot"
           git config --global user.email "github-action@github.com 
           git add *.db  # 
           git commit -m "Update news data (auto)"         
