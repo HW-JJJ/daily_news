@@ -2,7 +2,7 @@ name: Fetch News Data  # 뉴스 데이터 수집
 
 on: 
   schedule: 
-     - cron: "*/20 * * * *"  # 매 10분마다 실행
+    - cron: "*/20 * * * *"  # 매 20분마다 실행
   workflow_dispatch:  # 수동 실행 가능
   push:  
     branches: 
@@ -36,17 +36,23 @@ jobs:
           pip install flask  # flask 패키지 설치
           pip install selenium  # selenium 패키지 설치
           pip install scipy==1.7.3  # scipy 버전 1.7.3으로 고정
-      - name: 변경 사항 커밋 및 푸시
+
+      - name: 변경 사항 확인
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-action@github.com"
-          if ls *.db 1> /dev/null 2>&1; then
-            git add *.db  # .db 파일이 있을 경우에만 추가
-            git commit -m "Update news data (auto)" || echo "No changes to commit"
+          git status  # 변경된 파일을 확인합니다.
+      
+      - name: .db 파일이 변경된 경우 커밋 및 푸시
+        run: |
+          if git status --porcelain | grep -q '.db'; then  # .db 파일이 변경된 경우에만 실행
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-action@github.com"
+            git add *.db
+            git commit -m "Update news data $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
             git push
           else
             echo "No .db files to commit"
           fi
+
       - name: 디버깅 - .db 파일 확인
         run: |
-          ls -la
+          ls -la  # .db 파일 목록을 확인
