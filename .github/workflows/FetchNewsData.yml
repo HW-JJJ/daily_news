@@ -47,7 +47,7 @@ jobs:
 
       - name: Set up Chrome for Selenium
         run: |
-          export CHROME_BIN=/usr/bin/chromium-browser
+          export CHROME_BIN=/usr/bin/chromium-browser  # Chromium 경로 지정
           export DISPLAY=:99.0
           sudo apt-get install -y xvfb
           Xvfb :99 &
@@ -57,6 +57,7 @@ jobs:
           python news_script.py
         env:
           DISPLAY: :99.0  # headless 환경에서 실행될 수 있도록 DISPLAY 설정
+          CHROME_BIN: /usr/bin/chromium-browser  # Selenium에서 사용할 Chromium 경로 설정
 
       - name: 변경 사항 커밋 및 푸시
         run: |
