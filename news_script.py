@@ -509,6 +509,9 @@ def world_article():
     finally:
         print() 
 
+
+
+
     return(summary)
 
 #  기사요약
