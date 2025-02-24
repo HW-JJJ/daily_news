@@ -26,7 +26,7 @@ driver.get(url)
 def politic_article():
 
     # 데이터베이스 연결
-    conn = sqlite3.connect("politics.db")
+    conn = sqlite3.connect("db/politics.db")
     curs = conn.cursor()
 
     # 테이블 존재 여부 확인
@@ -105,7 +105,7 @@ def politic_article():
 # 경제 뉴스 함수
 def economy_article():
     # 데이터베이스 연결
-    conn = sqlite3.connect("economy.db")
+    conn = sqlite3.connect("db/economy.db")
     curs = conn.cursor()
     
     # 테이블 존재 여부 확인
@@ -185,7 +185,7 @@ def economy_article():
 # 사회 뉴스 함수
 def society_article():
     # 데이터베이스 연결
-    conn = sqlite3.connect("society.db")
+    conn = sqlite3.connect("db/society.db")
     curs = conn.cursor()
     
     # 테이블 존재 여부 확인
@@ -265,7 +265,7 @@ def society_article():
 # 생활/문화 뉴스 함수
 def culture_article():
     # 데이터베이스 연결
-    conn = sqlite3.connect("culture.db")
+    conn = sqlite3.connect("db/culture.db")
     curs = conn.cursor()
     
     # 테이블 존재 여부 확인
@@ -351,7 +351,7 @@ def culture_article():
 # IT/과학 뉴스 함수
 def it_article():
     # 데이터베이스 연결
-    conn = sqlite3.connect("it_science.db")
+    conn = sqlite3.connect("db/it_science.db")
     curs = conn.cursor()
     
     # 테이블 존재 여부 확인
@@ -432,7 +432,7 @@ def it_article():
 # 세계 뉴스 함수
 def world_article():
     # 데이터베이스 연결
-    conn = sqlite3.connect("world.db")
+    conn = sqlite3.connect("db/world.db")
     curs = conn.cursor()
     
     # 테이블 존재 여부 확인
