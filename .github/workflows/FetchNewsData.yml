@@ -24,7 +24,7 @@ jobs:
       - name: Upgrade pip and setuptools
         run: |
           pip install --upgrade pip setuptools
-      
+
       - name: Install wheel
         run: pip install wheel
 
@@ -38,22 +38,33 @@ jobs:
           pip install selenium
           pip install scipy==1.7.3
 
-      - name: Install Chrome and ChromeDriver
+      - name: Install Google Chrome
         run: |
           sudo apt-get update -y
           sudo apt-get install -y wget curl unzip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb
-          sudo apt --fix-broken install
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | sed 's/\./_/g')
-          wget https://chromedriver.storage.googleapis.com/113.0.5672.63/chromedriver_linux64.zip
+          sudo apt --fix-broken install -y
+
+      - name: Install ChromeDriver
+        run: |
+          # Get the latest stable version of Chrome
+          CHROME_VERSION=$(google-chrome --version | sed 's/Google Chrome //g' | cut -d '.' -f 1,2)
+          
+          # Download the compatible version of chromedriver
+          wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION})/chromedriver_linux64.zip
+          
+          # Unzip and move chromedriver to /usr/local/bin
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin
+          
+          # Clean up
+          rm chromedriver_linux64.zip
 
       - name: Run the news script
         run: |
           python news_script.py
-          
+
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
@@ -63,4 +74,3 @@ jobs:
           git push origin main  
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
