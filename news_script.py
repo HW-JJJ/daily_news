@@ -146,7 +146,7 @@ def economy_article():
     curs.close()
     conn.close()
     
-     try:
+    try:
         economy_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li span"))
         )
@@ -316,7 +316,7 @@ def culture_article():
     curs.close()
     conn.close()
     
-     try:
+    try:
         culture_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li+li span"))
         )
@@ -486,7 +486,7 @@ def world_article():
     curs.close()
     conn.close()
     
-   try:
+    try:
         world_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, ".Nlnb_menu_inner li+li+li+li+li+li+li span"))
         )
