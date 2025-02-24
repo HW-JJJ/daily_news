@@ -35,7 +35,7 @@ jobs:
           pip install gensim==3.8.3  # gensim 3.8.3 버전 설치
           pip install flask  # flask 패키지 설치
           pip install selenium  # selenium 패키지 설치
-          pip install scipy
+          pip install scipy==1.7.3  # scipy 버전 1.7.3으로 고정
 
       - name: 뉴스 데이터 크롤링 및 저장
         run: python news_script.py  # 웹 크롤링을 실행하는 Python 스크립트 실행
