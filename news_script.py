@@ -128,12 +128,12 @@ def collect_articles(section_name, db_name, section_index, menu_index):
 def main():
     # List of sections to collect news from
     sections = [
-        ("Politic", "politics.db", 1, 1),
-        ("Economy", "economy.db", 2, 2),
-        ("Society", "society.db", 3, 3),
-        ("Culture", "culture.db", 4, 4),
-        ("IT/Science", "it_science.db", 5, 5),
-        ("World", "world.db", 6, 6)
+        ("Politic", "politics.db", 2, 2),
+        ("Economy", "economy.db", 3, 3),
+        ("Society", "society.db", 4, 4),
+        ("Culture", "culture.db", 5, 5),
+        ("IT/Science", "it_science.db", 6, 6),
+        ("World", "world.db", 7, 7)
     ]
 
     for section_name, db_name, section_index, menu_index in sections:
