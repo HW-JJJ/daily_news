@@ -34,6 +34,7 @@ jobs:
           pip install numpy==1.21.2  # gensim 3.8.3과 호환되는 numpy 버전
           pip install gensim==3.8.3  # gensim 3.8.3 버전 설치
           pip install flask  # flask 패키지 설치
+          pip install selenium  # selenium 패키지 설치
           pip install scipy
 
       - name: 뉴스 데이터 크롤링 및 저장
