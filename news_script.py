@@ -11,10 +11,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 from gensim.summarization import summarize
 
-# URL for news section
+# 뉴스 섹션 URL
 url = "https://news.naver.com/section/100"
 
-# Setup Chrome options for headless mode
+# 크롬 옵션 설정 (헤드리스 모드)
 options = Options()
 options.add_argument("--headless=new")
 options.add_argument("--no-sandbox")
@@ -22,12 +22,12 @@ options.add_argument("--disable-dev-shm-usage")
 driver = wb.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 driver.get(url)
 
-# Common function to create table if it doesn't exist
+# 테이블이 존재하지 않으면 생성하는 함수
 def create_table(db_name):
     conn = sqlite3.connect(db_name)
     curs = conn.cursor()
     
-    # Table creation query
+    # 테이블 생성 쿼리
     sql = """
     CREATE TABLE IF NOT EXISTS contact(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,12 +41,12 @@ def create_table(db_name):
     curs.close()
     conn.close()
 
-# Function to insert data into the table
+# 데이터를 테이블에 삽입하는 함수
 def insert_data(db_name, title, article, body):
     conn = sqlite3.connect(db_name)
     curs = conn.cursor()
     
-    # Insert data query
+    # 데이터 삽입 쿼리
     insert_sql = "INSERT INTO contact (title, article, body) VALUES (?, ?, ?)"
     curs.execute(insert_sql, (title, article, body))
     conn.commit()
@@ -54,7 +54,7 @@ def insert_data(db_name, title, article, body):
     curs.close()
     conn.close()
 
-# Function to summarize the article based on its length
+# 기사 내용 길이에 따라 요약하는 함수
 def summarize_article(article_text):
     text_length = len(article_text)
     if text_length >= 1500:
@@ -81,66 +81,82 @@ def summarize_article(article_text):
         summary = article_text
     return summary
 
-# General function to collect articles from each section
+# 각 섹션에서 기사를 수집하는 함수
 def collect_articles(section_name, db_name, section_index, menu_index):
     try:
-        section_button = WebDriverWait(driver, 10).until(
+        # 섹션 클릭
+        section_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, f".Nlnb_menu_inner li:nth-child({menu_index}) span"))
         )
         section_button.click()
-        print(f"Clicked on {section_name} section")
+        print(f"{section_name} 섹션 클릭 완료")
 
-        headline_banner = WebDriverWait(driver, 10).until(
+        # 헤드라인 배너 클릭
+        headline_banner = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
         )
         headline_banner.click()
-        print(f"Clicked on headline banner")
+        print(f"헤드라인 배너 클릭 완료")
 
+        # 최대 10개 기사를 순차적으로 처리
+        article_count = 0
         for i in range(10):
             try:
-                # Wait for the news article link to be clickable
-                news_title_button = WebDriverWait(driver, 10).until(
+                # 뉴스 기사 링크 클릭
+                news_title_button = WebDriverWait(driver, 20).until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, f"#newsct div>ul>li:nth-child({i+1})>div>div a"))
                 )
                 news_title_button.click()
-                print(f"Clicked on article {i+1}")
-                time.sleep(2)
+                print(f"기사 {i+1} 클릭 완료")
 
-                # Wait for the title to load
-                news_titles = WebDriverWait(driver, 10).until(
+                # 뉴스 제목 로드 대기
+                news_titles = WebDriverWait(driver, 20).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "#title_area>span"))
                 )
                 news_title_text = news_titles.text
-                print(f"Title: {news_title_text}")
+                print(f"제목: {news_title_text}")
 
-                # Wait for the article body to load
+                # 기사 본문 로드 대기
                 article_body = WebDriverWait(driver, 20).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "#dic_area"))
                 )
                 article_text = article_body.text
-                print(f"Article text length: {len(article_text)}")
+                print(f"기사 길이: {len(article_text)}")
 
-                # Summarize the article
+                # 기사 요약
                 summary = summarize_article(article_text)
-                print(f"Summary: {summary}")
+                print(f"요약: {summary}")
 
-                # Insert the data into the database
+                # 데이터베이스에 삽입
                 insert_data(db_name, news_title_text, summary, article_text)
-                print(f"Inserted article {i+1} into the database")
+                print(f"기사 {i+1} 데이터베이스 삽입 완료")
 
+                # 이전 페이지로 돌아가기
                 driver.back()
-                time.sleep(2)
+
+                # 다시 기사 목록이 로드되도록 대기
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "#newsct div>ul"))
+                )
+                
+                article_count += 1  # 성공적으로 기사를 수집한 경우
+
             except Exception as e:
-                print(f"Error in article {i+1}: {e}")
+                print(f"기사 {i+1} 처리 중 오류: {e}")
+                continue  # 오류가 발생하면 해당 기사 넘기고 계속 진행
+
+        if article_count == 0:
+            print(f"{section_name} 섹션에서 10개 미만의 기사를 처리하여 건너뜁니다.")
+            return  # 10개 미만의 기사가 있으면 해당 섹션을 건너뜁니다.
+
     except Exception as e:
-        print(f"Error in {section_name} section: {e}")
+        print(f"{section_name} 섹션에서 오류 발생: {e}")
     finally:
-        print(f"Finished collecting articles for {section_name}")
+        print(f"{section_name} 섹션의 기사 수집 완료")
 
-
-# Main execution
+# 주요 실행 함수
 def main():
-    # List of sections to collect news from
+    # 수집할 섹션 리스트
     sections = [
         ("Politic", "politics.db", 2, 2),
         ("Economy", "economy.db", 3, 3),
@@ -151,16 +167,15 @@ def main():
     ]
 
     for section_name, db_name, section_index, menu_index in sections:
-        # Create the table for each section
+        # 각 섹션에 대해 테이블 생성
         create_table(db_name)
-        # Collect articles for each section
+        # 각 섹션의 기사 수집
         collect_articles(section_name, db_name, section_index, menu_index)
-        time.sleep(5)
 
-    # Close the driver after collecting all articles
+    # 모든 기사 수집 후 드라이버 종료
     driver.quit()
 
-# Run the main function
+# 실행
 if __name__ == "__main__":
     main()
 
