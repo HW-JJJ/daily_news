@@ -28,7 +28,7 @@ options.add_argument("--headless=new")  # 최신 headless 모드 사용
 options.add_argument("--no-sandbox")  # 일부 환경에서 필요
 options.add_argument("--disable-dev-shm-usage")  # 메모리 부족 문제 해결
 options.add_argument("--headless")  # 브라우저 창 없이 실행
-driver = wb.Chrome(service=Service(ChromeDriverManager().install()), options=options))
+driver = wb.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 driver.get(url)
 
 
