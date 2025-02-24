@@ -39,12 +39,15 @@ jobs:
           pip install flask  # flask 패키지 설치
           pip install selenium  # selenium 패키지 설치
           pip install scipy==1.7.3  # scipy 버전 1.7.3으로 고정
+
+      - name: Run the news scraper
+        run: |
+         python news_scraper.py
           
       - name: change push
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-action@github.com"
-    
-          git add *.db  # .db 파일이 있을 경우에만 추가
+          git config --global user.email "github-action@github.com 
+          git add *.db  # 
           git commit -m "Update news data (auto)"         
           git push
