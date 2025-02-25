@@ -6,15 +6,15 @@ on:
   workflow_dispatch:  # 수동 실행 가능하게 추가 (옵션)
   push:
     branches:
-      - main
+      - main  # main 브랜치에 푸시가 발생할 때 실행
 
 jobs:
   run_script:
-    runs-on: ubuntu-24.04  # 최신 Ubuntu 환경에서 실행
+    runs-on: ubuntu-24.04  # Ubuntu 환경에서 실행
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3  # 리포지토리 체크아웃
+        uses: actions/checkout@v3  # 리포지토리 최신 코드 체크아웃
 
       - name: Set up Python
         uses: actions/setup-python@v4  # Python 환경 설정
@@ -23,47 +23,58 @@ jobs:
 
       - name: Upgrade pip and setuptools
         run: |
-          pip install --upgrade pip setuptools
+          pip install --upgrade pip setuptools # pip와 setuptools를 최신 버전으로 업그레이드
 
       - name: Install wheel
         run: pip install wheel
 
       - name: Install dependencies
         run: |
-          pip install requests
-          pip install beautifulsoup4
-          pip install numpy==1.21.2
+          pip install requests # 뉴스 수집을 위한 requests 라이브러리 설치
+          pip install beautifulsoup4 # 웹 크롤링을 위한 beautifulsoup4 설치
+          pip install numpy==1.21.2 # 뉴스 기사 요약을 위한 numpy, gensim 설
           pip install gensim==3.8.3
-          pip install flask
-          pip install selenium
+          pip install flask  # 웹 서버 실행을 위한 flask 설치
+          pip install selenium # 동적 웹 크롤링을 위한 selenium 설치
           pip install scipy==1.7.3
-          pip install webdriver-manager  # webdriver-manager 설치
+          pip install webdriver-manager  # selenium에서 사용할 WebDriver 관리 라이브러리 설치
 
       - name: 크롬 브라우저 관련 환경 구성
         run: |
+
+          # 리눅스 환경에서 최신 크롬 설 다운로드 및 설
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb
           google-chrome --version
           sudo apt-get install unzip
+
+          # 크롬 드라이버 다운로드
           wget https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.126/linux64/chromedriver-linux64.zip
           unzip chromedriver-linux64.zip
+
+          # chromedriver 경로 이동
           mv chromedriver-linux64/chromedriver chromedriver
+
+          # chromedriver 실행 권한 추가
           sudo chmod +x chromedriver
 
-      - name: Run the news script
+      - name: 뉴스 데이터 db파일 가져오기
         run: |
           python news_script.py
 
-      - name: Commit and push changes
+      - name: 변경 사항 커밋 및 푸시
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
+
+          # GitHub 액세스 토큰을 사용하여 원격 URL 설정
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git add *.db
+          
+          git add *.db  # 생성되는 .db 파일들을 git에 추가
           git diff-index --quiet HEAD || git commit -m "Update news data (auto)"
-          git push origin main  
+          git push origin main  # main 브랜치에 푸시
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
 permissions:
-  contents: write  # 리포지토리의 컨텐츠에 대한 쓰기 권한
+  contents: write  # GitHub Actions가 레포지토리의 내용을 쓸 수 있도록 권한 설정
