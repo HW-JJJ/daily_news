@@ -181,7 +181,7 @@ def economy_article():
         headline_banner = driver.find_element(By.CSS_SELECTOR, "#newsct>div>div>a")
         headline_banner.click()
     except NoSuchElementException:
-        print(
+        print()
 
     # for문 돌면서 헤드라인 뉴스 10개까지 수집. 10개 이하면 try, except 구문을 통해 빠져나옴.
     try:
