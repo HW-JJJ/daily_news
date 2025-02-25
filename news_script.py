@@ -1,3 +1,4 @@
+from flask import Flask, render_template, request
 import sqlite3
 import random
 from selenium import webdriver as wb
@@ -22,7 +23,6 @@ options.add_argument("start-maximized")
 options.add_argument("enable-automation")
 options.add_argument("--disable-infobars")
 options.add_argument("--disable-dev-shm-usage")
-
 
 service = Service('./chromedriver')
 driver = wb.Chrome(service=service, options=options)
@@ -706,3 +706,4 @@ it_article()
 time.sleep(5)
 world_article()
 # DB 파일 경로 매핑
+
