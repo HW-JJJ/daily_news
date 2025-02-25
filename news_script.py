@@ -89,6 +89,7 @@ def collect_articles(section_name, db_name, section_index, menu_index):
             EC.element_to_be_clickable((By.CSS_SELECTOR, f".Nlnb_menu_inner li:nth-child({menu_index}) span"))
         )
         section_button.click()
+        time.sleep(5) 
         print(f"{section_name} 섹션 클릭 완료")
 
         # 헤드라인 배너 클릭
@@ -96,6 +97,7 @@ def collect_articles(section_name, db_name, section_index, menu_index):
             EC.element_to_be_clickable((By.CSS_SELECTOR, "#newsct>div>div>a"))
         )
         headline_banner.click()
+        time.sleep(5) 
         print(f"헤드라인 배너 클릭 완료")
 
         # 최대 10개 기사를 순차적으로 처리
@@ -107,12 +109,14 @@ def collect_articles(section_name, db_name, section_index, menu_index):
                     EC.element_to_be_clickable((By.CSS_SELECTOR, f"#newsct div>ul>li:nth-child({i+1})>div>div a"))
                 )
                 news_title_button.click()
+                time.sleep(5) 
                 print(f"기사 {i+1} 클릭 완료")
 
                 # 뉴스 제목 로드 대기
                 news_titles = WebDriverWait(driver, 20).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "#title_area>span"))
                 )
+              
                 news_title_text = news_titles.text
                 print(f"제목: {news_title_text}")
 
@@ -133,6 +137,7 @@ def collect_articles(section_name, db_name, section_index, menu_index):
 
                 # 이전 페이지로 돌아가기
                 driver.back()
+                time.sleep(5) 
 
                 # 다시 기사 목록이 로드되도록 대기
                 WebDriverWait(driver, 20).until(
