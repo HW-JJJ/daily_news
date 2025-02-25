@@ -54,10 +54,16 @@ jobs:
         run: |
           python news_script.py
 
-      - name: Commit and push changes
+       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add *.db
-          git commit -m "Update news data (auto)"
-          git push
+          git diff-index --quiet HEAD || git commit -m "Update news data (auto)"
+          git push origin main  
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+permissions:
+  contents: write  # 리포지토리의 컨텐츠에 대한 쓰기 권한
