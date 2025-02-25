@@ -2,30 +2,34 @@ name: Fetch News Data  # 뉴스 데이터 수집
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # 20분마다 실행 (UTC 기준)
+    - cron: '* 23 * * *'  # 오전 8시 실행 (코리아 기준)
   workflow_dispatch:  # 수동 실행 가능하게 추가 (옵션)
   push:
     branches:
       - main
 
 jobs:
-  fetch_news_data:
-    runs-on: ubuntu-24.04
+  run_script:
+    runs-on: ubuntu-24.04  # 최신 Ubuntu 환경에서 실행
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3  # 리포지토리 체크아웃
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4  # Python 환경 설정
         with:
           python-version: '3.9'  # 원하는 Python 버전 설정
 
-      - name: 필요 패키지 설치
+      - name: Upgrade pip and setuptools
         run: |
-          pip install wheel
+          pip install --upgrade pip setuptools
+
+      - name: Install wheel
+        run: pip install wheel
+
+      - name: Install dependencies
+        run: |
           pip install requests
           pip install beautifulsoup4
           pip install numpy==1.21.2
@@ -35,7 +39,7 @@ jobs:
           pip install scipy==1.7.3
           pip install webdriver-manager  # webdriver-manager 설치
 
-      - name: 크롬 브라우저 관련 환경구
+      - name: 크롬 브라우저 관련 환경 구성
         run: |
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb
@@ -46,15 +50,21 @@ jobs:
           mv chromedriver-linux64/chromedriver chromedriver
           sudo chmod +x chromedriver
 
-      - name: 뉴스 db파일 생성
-        run: python news_script.py
+      - name: Run the news script
+        run: |
+          python news_script.py
 
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add *.db
-          git commit -m "Update news data (auto)"
-          git push
-         
+          git diff-index --quiet HEAD || git commit -m "Update news data (auto)"
+          git push origin main  
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+permissions:
+  contents: write  # 리포지토리의 컨텐츠에 대한 쓰기 권한
 
